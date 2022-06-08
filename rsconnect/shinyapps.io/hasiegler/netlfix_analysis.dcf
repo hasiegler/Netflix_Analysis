@@ -1,0 +1,11 @@
+name: netlfix_analysis
+title:
+username:
+account: hasiegler
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6423374
+bundleId: 5973246
+url: https://hasiegler.shinyapps.io/netlfix_analysis/
+when: 1654214960.67296
+lastSyncTime: 1654214960.67298
