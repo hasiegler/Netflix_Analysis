@@ -153,7 +153,42 @@ ui <- fluidPage(
                               selected = "fill")
                   ),
            column(width = 9,
-                  plotOutput(outputId = "groupbarplot")))
+                  plotOutput(outputId = "groupbarplot"))),
+  
+  tags$hr(),
+  
+  fluidRow(column(width = 3,
+                  tags$h3("By Group Statistics"),
+                  strong("Select variable to display"),
+                  selectInput("statvar",
+                              label = NULL,
+                              choices = c("runtime",
+                                          "seasons",
+                                          "imdb_score",
+                                          "imdb_votes",
+                                          "tmdb_popularity",
+                                          "tmdb_score"),
+                              selected = "runtime"),
+                  strong("Select variable to group by"),
+                  selectInput("groupbyvar",
+                              label = NULL,
+                              choices = c("release_year",
+                                          "age_certification",
+                                          "seasons",
+                                          "main_genre",
+                                          "country"),
+                              selected = "age_certification"),
+                  strong("Select statistic"),
+                  selectInput("stat",
+                              label = NULL,
+                              choices = c("mean",
+                                          "median",
+                                          "min",
+                                          "max"),
+                              selected = "mean")
+                  ),
+           column(width = 9,
+                  plotOutput(outputId = "statbarplot")))
   
   
   
@@ -276,19 +311,34 @@ server <- function(input, output) {
   
   output$barplot <- renderPlot({
     df_subset() %>% 
-      ggplot(aes(x = !!rlang::sym(input$barvar))) + 
-      geom_bar() + 
+      ggplot(aes(x = as.factor(!!rlang::sym(input$barvar)))) + 
+      geom_bar(fill = "dodgerblue") + 
       theme_bw() + 
-      theme(axis.text.x = element_text(angle = 90))
+      theme(axis.text.x = element_text(angle = 90)) + 
+      labs(x = input$barvar)
   })
   
   output$groupbarplot <- renderPlot({
     df_subset() %>% 
-      ggplot(aes(x = !!rlang::sym(input$groupbar1), fill = !!rlang::sym(input$groupbar2))) + 
+      ggplot(aes(x = as.factor(!!rlang::sym(input$groupbar1)), 
+                 fill = as.factor(!!rlang::sym(input$groupbar2)))) + 
       geom_bar(position = input$groupoption) +
       theme_bw() + 
+      labs(y = "") +
       theme(axis.text.x = element_text(angle = 90)) + 
-      labs(y = "")
+      labs(x = input$groupbar1, 
+           fill = input$groupbar2)
+  })
+  
+  output$statbarplot <- renderPlot({
+    df_subset() %>% 
+      ggplot(aes(x = as.factor(!!rlang::sym(input$groupbyvar)),
+                 y = !!rlang::sym(input$statvar))) + 
+      geom_bar(stat = "summary",
+               fun = input$stat, 
+               fill = "dodgerblue") + 
+      labs(x = input$groupbyvar,
+           y = str_c(input$stat, " ", input$statvar))
   })
   
   

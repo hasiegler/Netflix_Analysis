@@ -79,19 +79,13 @@ data <- data %>%
                              TRUE ~ country))
 
 
+stats <- data %>% 
+  group_by(age_certification) %>% 
+  summarise(stat = mean(runtime))
 
-data %>% 
-  ggplot(aes(x = main_genre, fill = age_certification)) + 
-  geom_bar(position = "fill") +
-  theme_bw() + 
-  theme(axis.text.x = element_text(angle = 90)) + 
-  labs(y = "")
-
-data %>% 
-  ggplot(aes(x = country)) + 
-  geom_bar() + 
-  theme_bw() + 
-  theme(axis.text.x = element_text(angle = 90))
+ggplot(data, aes(x = reorder(age_certification, runtime), y = runtime)) + 
+  geom_bar(stat = "summary",
+           fun = "max")
 
 
 #time trend
