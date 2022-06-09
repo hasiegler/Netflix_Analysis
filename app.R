@@ -6,19 +6,19 @@ library(vtable)
 
 ui <- fluidPage(
   
-  titlePanel("Exploring the Ratings and Popularity of Netflix Shows and Movies"),
+  titlePanel("Data Exploration of Netflix Shows and Movies"),
   
   strong("Created by Henry Siegler", tags$br(),
          "California Polytechnic State University, San Luis Obispo"),
   
   tags$br(),
-  
   "The interactive app uses data containing information on all Netflix shows 
-  and movies as of May 2022. 
-  The app allows the user to explore the characteristics 
-  of Netflix shows and movies using both numeric and categorical variables",
-  
-  "The data is from kaggle.com",
+  and movies as of May 2022.",
+  tags$br(),
+  "The app allows the user to explore the characteristics 
+  of Netflix shows and movies using both numeric and categorical variables.",
+  tags$br(),
+  "The data is from kaggle.com.",
   
   tags$hr(),
   
@@ -30,9 +30,26 @@ ui <- fluidPage(
   tags$hr(),
   
   fluidRow(column(width = 3,
+                  tags$h3("Variable Descriptions")),
+           column(width = 9,
+                  tableOutput(outputId = "descriptions"))
+           ),
+  
+  tags$hr(),
+  
+  fluidRow(column(width = 3,
                   tags$h3("Descriptive Statistics")),
            column(width = 9,
                   tableOutput(outputId = "sumstats"))),
+  
+  tags$hr(),
+  
+  fluidRow(column(width = 3,
+                  tags$h3("Number of Missing Observations by Column"),
+                  strong("Total Number of Observations in Analysis"),
+                  verbatimTextOutput(outputId = "totalobs")),
+           column(width = 9,
+                  tableOutput(outputId = "missingobs"))),
   
   tags$hr(),
   
@@ -69,7 +86,7 @@ ui <- fluidPage(
                               label = "Choose a range of Release Years",
                               min = 1945,
                               max = 2022,
-                              value = c(1945, 2022),
+                              value = c(2000, 2022),
                               sep = ""
                               )
                   ),
@@ -96,7 +113,7 @@ ui <- fluidPage(
                               label = "Choose a range of Release Years",
                               min = 1945,
                               max = 2022,
-                              value = c(1945, 2022),
+                              value = c(2000, 2022),
                               sep = ""
                   )),
            column(width = 9,
@@ -115,8 +132,9 @@ ui <- fluidPage(
                                           "age_certification",
                                           "seasons",
                                           "main_genre",
-                                          "country")
-                              )
+                                          "country"),
+                              selected = "country"
+                              ),
                   ),
            column(width = 9,
                   plotOutput(outputId = "barplot"))
@@ -188,7 +206,72 @@ ui <- fluidPage(
                               selected = "mean")
                   ),
            column(width = 9,
-                  plotOutput(outputId = "statbarplot")))
+                  plotOutput(outputId = "statbarplot"))),
+  
+  tags$hr(),
+  
+  fluidRow(column(width = 3,
+                  tags$h3("K-means Clustering"),
+                  strong("Select Variable #1 (x-axis)"),
+                  selectInput("kmeans1",
+                              label = NULL,
+                              choices = c("runtime",
+                                          "seasons",
+                                          "imdb_score",
+                                          "imdb_votes",
+                                          "tmdb_popularity",
+                                          "tmdb_score"),
+                              selected = "runtime"),
+                  strong("Select Variable #2 (y-axis)"),
+                  selectInput("kmeans2",
+                              label = NULL, 
+                              choices = c("runtime",
+                                          "seasons",
+                                          "imdb_score",
+                                          "imdb_votes",
+                                          "tmdb_popularity",
+                                          "tmdb_score"),
+                              selected = "imdb_score"),
+                  strong("Choose number of clusters (k)"),
+                  numericInput("kmeansnum",
+                               label = NULL,
+                               value = 3, 
+                               min = 1, 
+                               max = NA)
+                  ),
+           column(width = 9, 
+                  plotOutput("kmeansplot"))
+           ),
+  
+  tags$hr(),
+  
+  fluidRow(column(width = 3,
+                  tags$h3("Linear Regression"),
+                  strong("Select Variable #1 (Independent Variable)"),
+                  selectInput("lr1",
+                              label  = NULL,
+                              choices = c("runtime",
+                                          "seasons",
+                                          "imdb_score",
+                                          "imdb_votes",
+                                          "tmdb_popularity",
+                                          "tmdb_score"),
+                              selected = "runtime"),
+                  strong("Select Dependendent Variable(s)"),
+                  selectInput("lr2",
+                              label = NULL,
+                              choices = c("runtime",
+                                          "seasons",
+                                          "imdb_score",
+                                          "imdb_votes",
+                                          "tmdb_popularity",
+                                          "tmdb_score"),
+                              selected = "imdb_score",
+                              multiple = TRUE)
+                  ),
+           column(width = 9,
+                  verbatimTextOutput(outputId = "lrout"))
+           )
   
   
   
@@ -245,7 +328,9 @@ server <- function(input, output) {
                                country == "Taiwan, Province of China" ~ "Taiwan",
                                country == "United Kingdom of Great Britain and Northern Ireland" ~ "UK",
                                country == "United States of America" ~ "USA",
-                               TRUE ~ country))
+                               TRUE ~ country)) %>% 
+    select(title, type, release_year, age_certification, runtime, seasons, imdb_score, 
+           imdb_votes, tmdb_popularity, tmdb_score, main_genre, country)
   #manipulation end
   
   df_subset <- reactive({
@@ -254,10 +339,41 @@ server <- function(input, output) {
     return(a)
   })
   
+  output$descriptions <- renderTable({
+    names <- colnames(df_subset())
+    descriptions <- c("Title of the film",
+                      "Type of film (movie or show)",
+                      "Year film was released",
+                      "Film content rating",
+                      "The length of the episode or movie (minutes)",
+                      "Number of seasons",
+                      "Score on IMDB",
+                      "Votes on IMDB",
+                      "Popularity on TMDB",
+                      "Score on TMDB",
+                      "First listed genre",
+                      "First listed production country")
+    data.frame(Column = names,
+               Description = descriptions)
+  })
+  
   output$sumstats <- renderTable({
     df_subset() %>% 
       select_if(is.numeric) %>% 
       st(out = "return")
+  })
+  
+  output$totalobs <- renderPrint({
+    nrow(df_subset())
+  })
+  
+  output$missingobs <- renderTable({
+    na_count <- df_subset() %>% 
+      summarise_all(~sum(is.na(.)))
+    Column <- rownames(t(na_count))
+    cbind(Column, t(na_count)) %>% 
+      as.data.frame() %>% 
+      rename(Count = "V2")
   })
   
   output$extreme <- renderTable({
@@ -311,7 +427,7 @@ server <- function(input, output) {
   
   output$barplot <- renderPlot({
     df_subset() %>% 
-      ggplot(aes(x = as.factor(!!rlang::sym(input$barvar)))) + 
+      ggplot(aes(x = fct_infreq(as.factor(!!rlang::sym(input$barvar))))) + 
       geom_bar(fill = "dodgerblue") + 
       theme_bw() + 
       theme(axis.text.x = element_text(angle = 90)) + 
@@ -319,7 +435,12 @@ server <- function(input, output) {
   })
   
   output$groupbarplot <- renderPlot({
-    df_subset() %>% 
+    groupdata <- df_subset() %>% 
+      select(!!rlang::sym(input$groupbar1),
+             !!rlang::sym(input$groupbar2)) %>% 
+      drop_na()
+    
+    groupdata %>% 
       ggplot(aes(x = as.factor(!!rlang::sym(input$groupbar1)), 
                  fill = as.factor(!!rlang::sym(input$groupbar2)))) + 
       geom_bar(position = input$groupoption) +
@@ -338,7 +459,32 @@ server <- function(input, output) {
                fun = input$stat, 
                fill = "dodgerblue") + 
       labs(x = input$groupbyvar,
-           y = str_c(input$stat, " ", input$statvar))
+           y = str_c(input$stat, " ", input$statvar)) + 
+      theme_bw()
+  })
+  
+  output$kmeansplot <- renderPlot({
+    k_data <- df_subset() %>% 
+      select(!!rlang::sym(input$kmeans1), 
+             !!rlang::sym(input$kmeans2)) %>% 
+      drop_na()
+    k_out <- k_data %>% 
+      as.matrix() %>% 
+      kmeans(centers = input$kmeansnum)
+    clusts <- k_out$cluster
+    k_data <- cbind(k_data, clusts)
+    ggplot(k_data) + 
+      geom_point(aes(x = !!rlang::sym(input$kmeans1),
+                     y = !!rlang::sym(input$kmeans2),
+                     color = as.factor(clusts))) + 
+      labs(color = "Clusters") + 
+      theme_bw()
+  })
+  
+  output$lrout <- renderPrint({
+    cur_formula <- paste0(input$lr1, " ~ ", paste0(input$lr2, collapse = " + "))
+    model <- lm(formula = cur_formula, data = df_subset())
+    summary(model)
   })
   
   
