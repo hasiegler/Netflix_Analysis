@@ -74,6 +74,25 @@ ui <- fluidPage(
   tags$hr(),
   
   fluidRow(column(width = 3,
+                  tags$h3("Univariate Analysis"),
+                  strong("Select variable for density plot"),
+                  selectInput("densityvar",
+                              label = NULL,
+                              choices = c("runtime",
+                                          "seasons",
+                                          "imdb_score",
+                                          "imdb_votes",
+                                          "tmdb_popularity",
+                                          "tmdb_score"),
+                              selected = "imdb_score")
+                  ),
+           column(width = 9,
+                  plotOutput(outputId = "densityplot"))
+           ),
+  
+  tags$hr(),
+  
+  fluidRow(column(width = 3,
                   tags$h3("Time Trend Graph (Movie/Show Release Year)"),
                   strong("Select variable to display"),
                   selectInput("timetrendvar",
@@ -378,6 +397,16 @@ server <- function(input, output) {
       head(5) %>% 
       arrange(desc(!!rlang::sym(input$extreme_var)))
     rbind(top, low)
+  })
+  
+  output$densityplot <- renderPlot({
+    df_subset() %>% 
+      ggplot(aes(x = !!rlang::sym(input$densityvar))) +
+      geom_histogram(aes(y = ..density..),
+                     fill = "dodgerblue") + 
+      geom_density(size = 1) + 
+      labs(y = "Density") +
+      theme_bw()
   })
   
   output$timeplot <- renderPlot({
