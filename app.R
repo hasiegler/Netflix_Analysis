@@ -8,8 +8,7 @@ ui <- fluidPage(
   
   titlePanel("Data Exploration of Netflix Shows and Movies"),
   
-  strong("Created by Henry Siegler", tags$br(),
-         "California Polytechnic State University, San Luis Obispo"),
+  strong("Henry Siegler"),
   
   tags$br(),
   "The interactive app uses data containing information on all Netflix shows 
@@ -18,7 +17,11 @@ ui <- fluidPage(
   "The app allows the user to explore the characteristics 
   of Netflix shows and movies using both numeric and categorical variables.",
   tags$br(),
-  "The data is from kaggle.com.",
+  "The original data is from ", em("kaggle.com"), ", with additional data manipulation for the following analysis.",
+  tags$br(),
+  tags$br(),
+  tags$a(href = "https://github.com/hasiegler/Netflix_Analysis/blob/master/app.R",
+         "GitHub Code for Shiny app"),
   
   tags$hr(),
   
@@ -211,9 +214,9 @@ ui <- fluidPage(
   tags$hr(),
   
   fluidRow(column(width = 3,
-                  tags$h3("K-means Clustering"),
+                  tags$h3("Scatter Plot"),
                   strong("Select Variable #1 (x-axis)"),
-                  selectInput("kmeans1",
+                  selectInput("scatter1",
                               label = NULL,
                               choices = c("runtime",
                                           "seasons",
@@ -223,7 +226,7 @@ ui <- fluidPage(
                                           "tmdb_score"),
                               selected = "runtime"),
                   strong("Select Variable #2 (y-axis)"),
-                  selectInput("kmeans2",
+                  selectInput("scatter2",
                               label = NULL, 
                               choices = c("runtime",
                                           "seasons",
@@ -231,16 +234,9 @@ ui <- fluidPage(
                                           "imdb_votes",
                                           "tmdb_popularity",
                                           "tmdb_score"),
-                              selected = "imdb_score"),
-                  strong("Choose number of clusters (k)"),
-                  numericInput("kmeansnum",
-                               label = NULL,
-                               value = 3, 
-                               min = 1, 
-                               max = NA)
-                  ),
+                              selected = "imdb_score")),
            column(width = 9, 
-                  plotOutput("kmeansplot"))
+                  plotOutput("scatterplot"))
            ),
   
   tags$hr(),
@@ -272,11 +268,6 @@ ui <- fluidPage(
            column(width = 9,
                   verbatimTextOutput(outputId = "lrout"))
            )
-  
-  
-  
-  
-  
 )
 
 
@@ -463,21 +454,17 @@ server <- function(input, output) {
       theme_bw()
   })
   
-  output$kmeansplot <- renderPlot({
-    k_data <- df_subset() %>% 
-      select(!!rlang::sym(input$kmeans1), 
-             !!rlang::sym(input$kmeans2)) %>% 
-      drop_na()
-    k_out <- k_data %>% 
-      as.matrix() %>% 
-      kmeans(centers = input$kmeansnum)
-    clusts <- k_out$cluster
-    k_data <- cbind(k_data, clusts)
-    ggplot(k_data) + 
-      geom_point(aes(x = !!rlang::sym(input$kmeans1),
-                     y = !!rlang::sym(input$kmeans2),
-                     color = as.factor(clusts))) + 
-      labs(color = "Clusters") + 
+  output$scatterplot <- renderPlot({
+    scatterdata <- df_subset() %>% 
+      select(!!rlang::sym(input$scatter1), 
+             !!rlang::sym(input$scatter2))
+    scatterdata %>% 
+      ggplot() + 
+      geom_point(aes(x = !!rlang::sym(input$scatter1),
+                     y = !!rlang::sym(input$scatter2)
+                     ),
+                 color = "dodgerblue",
+                 size = 1) + 
       theme_bw()
   })
   
