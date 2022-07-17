@@ -21,6 +21,15 @@ movies %>%
   ggplot(aes(x = imdb_score, y = ..density..)) +
   geom_histogram(fill = "dodgerblue") + 
   geom_density(size = 1) + 
-  geom
   labs(y = "Density") +
   theme_bw()
+  
+
+lower_outliers <- sum(movies$imdb_score < summary(movies$imdb_score)[2] - (1.5*IQR(movies$imdb_score, na.rm = TRUE)), na.rm = TRUE)
+upper_outliers <- sum(movies$imdb_score > summary(movies$imdb_score)[5] + (1.5*IQR(movies$imdb_score, na.rm = TRUE)), na.rm = TRUE)
+
+outlierdata <- data.frame(first = c("Number of Outliers below Minimum Threshold",
+                     "Number of Outliers above Maximum Threshold"),
+           second = c(lower_outliers, upper_outliers))
+names(outlierdata) <- NULL
+outlierdata
