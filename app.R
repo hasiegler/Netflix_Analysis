@@ -84,7 +84,10 @@ ui <- fluidPage(
                                           "imdb_votes",
                                           "tmdb_popularity",
                                           "tmdb_score"),
-                              selected = "imdb_score")
+                              selected = "imdb_score"),
+                  strong("Check box to remove outliers"),
+                  checkboxInput("outlierbox",
+                                label = NULL)
                   ),
            column(width = 9,
                   plotOutput(outputId = "densityplot"))
@@ -400,13 +403,33 @@ server <- function(input, output) {
   })
   
   output$densityplot <- renderPlot({
-    df_subset() %>% 
-      ggplot(aes(x = !!rlang::sym(input$densityvar))) +
-      geom_histogram(aes(y = ..density..),
-                     fill = "dodgerblue") + 
-      geom_density(size = 1) + 
-      labs(y = "Density") +
-      theme_bw()
+    
+    if(input$outlierbox){
+      
+      no_outliers <- reactive(df_subset() %>% 
+        filter(!!rlang::sym(input$densityvar) > summary(!!rlang::sym(input$densityvar))[2] - 
+                 (1.5*IQR(!!rlang::sym(input$densityvar), na.rm = TRUE)) 
+               & !!rlang::sym(input$densityvar) < summary(!!rlang::sym(input$densityvar))[5] + 
+                 (1.5*IQR(!!rlang::sym(input$densityvar), na.rm = TRUE))))
+      no_outliers() %>%
+        ggplot(aes(x = !!rlang::sym(input$densityvar))) +
+        geom_histogram(aes(y = ..density..),
+                      fill = "dodgerblue") + 
+        geom_density(size = 1) + 
+        labs(y = "Density") +
+        theme_bw()
+      
+      } else{
+        df_subset() %>% 
+          ggplot(aes(x = !!rlang::sym(input$densityvar))) +
+          geom_histogram(aes(y = ..density..),
+                         fill = "dodgerblue") + 
+          geom_density(size = 1) + 
+          labs(y = "Density") + 
+          theme_bw()
+        
+      }
+    
   })
   
   output$timeplot <- renderPlot({
