@@ -87,7 +87,8 @@ ui <- fluidPage(
                               selected = "imdb_score"),
                   strong("Check box to remove outliers"),
                   checkboxInput("outlierbox",
-                                label = NULL)
+                                label = NULL),
+                  tableOutput(outputId = "outliertable")
                   ),
            column(width = 9,
                   plotOutput(outputId = "densityplot"))
@@ -402,6 +403,23 @@ server <- function(input, output) {
     rbind(top, low)
   })
   
+  output$outliertable <- renderTable({
+    vector_var <- df_subset() %>% 
+      select(!!rlang::sym(input$densityvar)) %>% 
+      pull()
+    
+    lower_outliers <- sum(vector_var < 
+                            summary(vector_var)[2] - (1.5*IQR(vector_var, na.rm = TRUE)), na.rm = TRUE)
+    upper_outliers <- sum(vector_var > 
+                            summary(vector_var)[5] + (1.5*IQR(vector_var, na.rm = TRUE)), na.rm = TRUE)
+    
+    outlierdata <- data.frame(first = c("Number of Outliers below Minimum Threshold",
+                                        "Number of Outliers above Maximum Threshold"),
+                              second = c(lower_outliers, upper_outliers))
+    names(outlierdata) <- NULL
+    outlierdata
+  })
+  
   output$densityplot <- renderPlot({
     
     if(input$outlierbox){
@@ -420,12 +438,22 @@ server <- function(input, output) {
         theme_bw()
       
       } else{
+        vector_var <- df_subset() %>% 
+          select(!!rlang::sym(input$densityvar)) %>% 
+          pull()
+        lower <- summary(vector_var)[2] - (1.5*IQR(vector_var, na.rm = TRUE))
+        upper <- summary(vector_var)[5] + (1.5*IQR(vector_var, na.rm = TRUE))
         df_subset() %>% 
           ggplot(aes(x = !!rlang::sym(input$densityvar))) +
           geom_histogram(aes(y = ..density..),
                          fill = "dodgerblue") + 
           geom_density(size = 1) + 
-          labs(y = "Density") + 
+          geom_vline(xintercept = lower,
+                     size = 1) + 
+          geom_vline(xintercept = upper,
+                     size = 1) +
+          labs(y = "Density",
+               subtitle = "Vertical Lines Represent Bounds of Outliers") + 
           theme_bw()
         
       }

@@ -33,3 +33,7 @@ outlierdata <- data.frame(first = c("Number of Outliers below Minimum Threshold"
            second = c(lower_outliers, upper_outliers))
 names(outlierdata) <- NULL
 outlierdata
+
+movies %>% 
+  select(imdb_score) %>% 
+  pull()
