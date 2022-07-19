@@ -5,7 +5,7 @@ account: hasiegler
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6463094
-bundleId: 5994243
+bundleId: 6110352
 url: https://hasiegler.shinyapps.io/netflix_analysis/
-when: 1654815645.91179
-lastSyncTime: 1654815645.91181
+when: 1658203017.57166
+lastSyncTime: 1658203017.57168
