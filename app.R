@@ -92,7 +92,9 @@ ui <- fluidPage(
                   strong("Check box to remove outliers"),
                   checkboxInput("outlierbox",
                                 label = NULL),
-                  tableOutput(outputId = "outliertable")
+                  tableOutput(outputId = "outliertable"),
+                  em("Note: Outlier defined as a value more than 1.5 IQR below Q1
+                     or more than 1.5 IQR above Q3.")
                   ),
            column(width = 9,
                   plotOutput(outputId = "densityplot"))
