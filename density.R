@@ -2,6 +2,11 @@ movies <- data %>%
   filter(type == "MOVIE")
 
 movies %>% 
+  select(imdb_votes) %>% 
+  drop_na() %>% 
+  nrow()
+
+movies %>% 
   ggplot(aes(x = imdb_score)) +
   geom_histogram(aes(y = ..density..),
                  fill = "dodgerblue") + 
@@ -37,3 +42,10 @@ outlierdata
 movies %>% 
   select(imdb_score) %>% 
   pull()
+
+movies %>% 
+  ggplot(aes(x = fct_infreq(as.factor(!!rlang::sym(input$barvar))))) + 
+  geom_bar(fill = "dodgerblue") + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 90)) + 
+  labs(x = input$barvar)

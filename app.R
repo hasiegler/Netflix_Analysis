@@ -20,8 +20,10 @@ ui <- fluidPage(
   "The original data is from ", em("kaggle.com"), ", with additional data manipulation for the following analysis.",
   tags$br(),
   tags$br(),
+  "See the Github link below for data manipulations and code for Shiny App:",
+  tags$br(),
   tags$a(href = "https://github.com/hasiegler/Netflix_Analysis/blob/master/app.R",
-         "GitHub Code for Shiny app"),
+         "GitHub Code"),
   
   tags$hr(),
   
@@ -50,7 +52,9 @@ ui <- fluidPage(
   fluidRow(column(width = 3,
                   tags$h3("Number of Missing Observations by Column"),
                   strong("Total Number of Observations in Analysis"),
-                  verbatimTextOutput(outputId = "totalobs")),
+                  verbatimTextOutput(outputId = "totalobs"),
+                  em("Note: In the graphs below, 
+                     if a movie/show is missing a value used in the graph, that observation will be omitted.")),
            column(width = 9,
                   tableOutput(outputId = "missingobs"))),
   
@@ -260,36 +264,6 @@ ui <- fluidPage(
                               selected = "imdb_score")),
            column(width = 9, 
                   plotOutput("scatterplot"))
-           ),
-  
-  tags$hr(),
-  
-  fluidRow(column(width = 3,
-                  tags$h3("Linear Regression"),
-                  strong("Select Variable #1 (Independent Variable)"),
-                  selectInput("lr1",
-                              label  = NULL,
-                              choices = c("runtime",
-                                          "seasons",
-                                          "imdb_score",
-                                          "imdb_votes",
-                                          "tmdb_popularity",
-                                          "tmdb_score"),
-                              selected = "runtime"),
-                  strong("Select Dependendent Variable(s)"),
-                  selectInput("lr2",
-                              label = NULL,
-                              choices = c("runtime",
-                                          "seasons",
-                                          "imdb_score",
-                                          "imdb_votes",
-                                          "tmdb_popularity",
-                                          "tmdb_score"),
-                              selected = "imdb_score",
-                              multiple = TRUE)
-                  ),
-           column(width = 9,
-                  verbatimTextOutput(outputId = "lrout"))
            )
 )
 
@@ -361,10 +335,10 @@ server <- function(input, output) {
                       "Film content rating",
                       "The length of the episode or movie (minutes)",
                       "Number of seasons",
-                      "Score on IMDB",
-                      "Votes on IMDB",
+                      "Score on IMDB (1-10)",
+                      "Number of votes on IMDB ",
                       "Popularity on TMDB",
-                      "Score on TMDB",
+                      "Score on TMDB (1-10)",
                       "First listed genre",
                       "First listed production country")
     data.frame(Column = names,
@@ -407,6 +381,10 @@ server <- function(input, output) {
     vector_var <- df_subset() %>% 
       select(!!rlang::sym(input$densityvar)) %>% 
       pull()
+    obs_in_row <- df_subset() %>% 
+      select(!!rlang::sym(input$densityvar)) %>% 
+      drop_na() %>% 
+      nrow()
     
     lower_outliers <- sum(vector_var < 
                             summary(vector_var)[2] - (1.5*IQR(vector_var, na.rm = TRUE)), na.rm = TRUE)
@@ -417,6 +395,7 @@ server <- function(input, output) {
                                         "Number of Outliers above Maximum Threshold"),
                               second = c(lower_outliers, upper_outliers))
     names(outlierdata) <- NULL
+    outlierdata <- rbind(outlierdata, c("Total number of Observations", obs_in_row))
     outlierdata
   })
   
@@ -497,7 +476,7 @@ server <- function(input, output) {
   })
   
   output$barplot <- renderPlot({
-    df_subset() %>% 
+    df_subset() %>%
       ggplot(aes(x = fct_infreq(as.factor(!!rlang::sym(input$barvar))))) + 
       geom_bar(fill = "dodgerblue") + 
       theme_bw() + 
@@ -547,13 +526,7 @@ server <- function(input, output) {
                  size = 1) + 
       theme_bw()
   })
-  
-  output$lrout <- renderPrint({
-    cur_formula <- paste0(input$lr1, " ~ ", paste0(input$lr2, collapse = " + "))
-    model <- lm(formula = cur_formula, data = df_subset())
-    summary(model)
-  })
-  
+
   
 }
 
