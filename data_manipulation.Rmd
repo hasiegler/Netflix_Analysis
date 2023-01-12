@@ -179,5 +179,5 @@ data %>%
 The data is cleaned and prepared for the shiny app, so we will save the dataframe as a csv file.
 
 ```{r}
-write.csv(data, here("cleaned_data.csv"))
+write.csv(data, here("cleaned_data.csv"), row.names = FALSE)
 ```
