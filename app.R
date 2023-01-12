@@ -21,10 +21,15 @@ ui <- fluidPage(
   "The original data is from ", em("kaggle.com"), ", with additional data manipulation for the following analysis.",
   tags$br(),
   tags$br(),
-  "See the Github link below for data manipulations and code for Shiny App:",
+  "See the link for the Shiny App code:",
   tags$br(),
   tags$a(href = "https://github.com/hasiegler/Netflix_Analysis/blob/master/app.R",
-         "GitHub Code"),
+         "Code for Shiny App"),
+  tags$br(),
+  "See the link for the data cleaning and manipulations:",
+  tags$br(),
+  tags$a(href = "https://github.com/hasiegler/Netflix_Analysis/blob/master/data_manipulation.md",
+         "Code for Data Cleaning"),
   
   tags$hr(),
   
